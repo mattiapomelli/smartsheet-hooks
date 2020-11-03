@@ -3,31 +3,34 @@ const { smartSheetAccessToken, sheetId } = require('./config')
 
 let smartsheet;
 
+// initializes and returns smartsheet client, or returns the existing one if already created
 function initializeSmartsheetClient() {
     if(smartsheet) {
         return smartsheet
     }
     smartsheet = client.createClient({
         accessToken: smartSheetAccessToken,
-        logLevel: 'info'
+        //logLevel: 'info'
     });
     return smartsheet
 }
 
+// check for an existing web hook with the name and targetsheet provided, if doesn't find it creates a new one
 async function initializeHook(targetSheetId, hookName, callbackUrl) {
     try {
         let webhook = null;
 
-        // Get *all* my hooks
+        // Get all my hooks
         const listHooksResponse = await smartsheet.webhooks.listWebhooks({
             includeAll: true
         });
         console.log(`Found ${listHooksResponse.totalCount} hooks owned by user`);
+
         // Check for existing hooks on this sheet for this app
         for (const hook of listHooksResponse.data) {
             if (hook.scopeObjectId.toString() === targetSheetId.toString()
                 && hook.name === hookName
-                && hook.callbackUrl === callbackUrl   // Might be appropriate for your scenario
+                && hook.callbackUrl === callbackUrl
             ) {
                 webhook = hook;
                 console.log(`Found matching hook with id: ${webhook.id}`);
@@ -35,12 +38,14 @@ async function initializeHook(targetSheetId, hookName, callbackUrl) {
             }
         }
 
+        // Didn't find any existing hook - create a new one
         if (!webhook) {
-            // Can't use any existing hook - create a new one
+            // TODO: make column to track dynamic by passing it to this function
+            // get sheet and target column to listen for changes on
             const sheet = await smartsheet.sheets.getSheet({id: sheetId})
             const columnToTrack = sheet.columns.find(column => column.title === "Stato")
-            console.log('column to track', columnToTrack)
 
+            // create new webhook with following options
             const options = {
                 body: {
                     name: hookName,
@@ -50,7 +55,7 @@ async function initializeHook(targetSheetId, hookName, callbackUrl) {
                     events: ["*.*"],
                     version: 1,
                     subscope: {
-                        columnIds: [columnToTrack.id]
+                        columnIds: [columnToTrack.id]       // columns to track
                     }
                 }
             };

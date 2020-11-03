@@ -5,6 +5,7 @@ const { getDifferenceInDays } = require('../utils/utils')
 const { initSmartsheet } = require('../smartsheet')
 const smartsheet = initSmartsheet()
 
+// lists all the webhooks for the current sheet
 hookRouter.get('/list', async (req, res) => {
     const listHooksResponse = await smartsheet.webhooks.listWebhooks({
         includeAll: true
@@ -12,6 +13,7 @@ hookRouter.get('/list', async (req, res) => {
     res.json(listHooksResponse)
 })
 
+// web hook callback - will be called when an event tracked by the webhook happens
 hookRouter.post("/tryhook", async(req, res) => {
     try {
         const body = req.body;
@@ -22,6 +24,7 @@ hookRouter.post("/tryhook", async(req, res) => {
             // Verify we are listening by echoing challenge value
             res.status(200).json({ smartsheetHookResponse: body.challenge });
         } else if (body.events) {
+            // received events
             console.log(`Received event callback with ${body.events.length} events at ${new Date().toLocaleString()}`);
 
             await processEvents(body);
@@ -40,17 +43,18 @@ hookRouter.post("/tryhook", async(req, res) => {
     }
 })
 
+// process events received by the webhook and update cells accordingly
 async function processEvents(callbackData) {
     if (callbackData.scope !== "sheet") {
         return;
     }
 
     for (const event of callbackData.events) {
-        // This sample only considers cell changes
+        // if the event was a cell change
         if (event.objectType === "cell") {
             console.log(`Cell changed, row id: ${event.rowId}, column id ${event.columnId}`);
 
-            // Since event data is "thin", we need to read from the sheet to get updated values.
+            // read from the sheet to get updated values.
             const options = {
                 id: callbackData.scopeObjectId,                 // Get sheet id from callback
                 queryParameters: {
@@ -66,18 +70,20 @@ async function processEvents(callbackData) {
             // get cell and column modified
             const modifiedCell = row.cells.find(cell => cell.columnId === event.columnId)
             const modifiedColumn = response.columns.find(column => column.id === modifiedCell.columnId)
-            console.log(` New value "${modifiedCell.value}" in column "${modifiedColumn.title}", row number ${row.rowNumber}`)
+            console.log(`New value "${modifiedCell.value}" in column "${modifiedColumn.title}", row number ${row.rowNumber}`)
 
-            // get start date
-            const startdateColumn = response.columns.find(column => column.title === 'Inizio')
-            const startdateCell = row.cells.find(cell => cell.columnId === startdateColumn.id)
-            const startDate = new Date(startdateCell.value)
-
-            // get column to update
-            const columnToUpdate = response.columns.find(column => column.title === 'Completato')
-            const columnToUpdate2 = response.columns.find(column => column.title === 'Durata')
-
+            // if the event happened is the one that should cause an update
             if(modifiedColumn.title === 'Stato' && modifiedCell.value === 'Completo') {
+                // get start date
+                const startdateColumn = response.columns.find(column => column.title === 'Inizio')
+                const startdateCell = row.cells.find(cell => cell.columnId === startdateColumn.id)
+                const startDate = new Date(startdateCell.value)
+
+                // get column to update
+                const completedColumn = response.columns.find(column => column.title === 'Completato')
+                const durationColumn = response.columns.find(column => column.title === 'Durata')
+
+                // update cells
                 const options = {
                     sheetId: sheetId,
                     body: [
@@ -85,11 +91,11 @@ async function processEvents(callbackData) {
                             id: row.id,
                             cells: [
                                 {
-                                    columnId: columnToUpdate.id,
+                                    columnId: completedColumn.id,
                                     value: new Date()
                                 },
                                 {
-                                    columnId: columnToUpdate2.id,
+                                    columnId: durationColumn.id,
                                     value: Math.floor(getDifferenceInDays( startDate , new Date())) + ' days'
                                 }
                             ]
@@ -98,7 +104,7 @@ async function processEvents(callbackData) {
                 }
 
                 smartsheet.sheets.updateRow(options)
-                .then((res) => {
+                .then(res => {
                     console.log(res.message)
                 }).catch(err => {
                     console.log('err: ', err)

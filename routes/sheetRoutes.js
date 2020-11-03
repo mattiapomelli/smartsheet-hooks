@@ -3,13 +3,14 @@ const sheetRouter = express.Router()
 const { initSmartsheet } = require('../smartsheet')
 const smartsheet = initSmartsheet()
 
+// get all sheets
 sheetRouter.get('/', async (req, res) => {
     var options = {
         queryParameters: {
           	include: "attachments",
           	includeAll: true
         }
-      };
+    };
     const sheets = await smartsheet.sheets.listSheets(options)
     res.json(sheets)
 })
