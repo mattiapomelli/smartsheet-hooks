@@ -1,5 +1,5 @@
 const client = require('smartsheet');
-const { smartSheetAccessToken } = require('./config')
+const { smartSheetAccessToken, sheetId } = require('./config')
 
 let smartsheet;
 
@@ -37,6 +37,10 @@ async function initializeHook(targetSheetId, hookName, callbackUrl) {
 
         if (!webhook) {
             // Can't use any existing hook - create a new one
+            const sheet = await smartsheet.sheets.getSheet({id: sheetId})
+            const columnToTrack = sheet.columns.find(column => column.title === "Stato")
+            console.log('column to track', columnToTrack)
+
             const options = {
                 body: {
                     name: hookName,
@@ -44,7 +48,10 @@ async function initializeHook(targetSheetId, hookName, callbackUrl) {
                     scope: "sheet",
                     scopeObjectId: targetSheetId,
                     events: ["*.*"],
-                    version: 1
+                    version: 1,
+                    subscope: {
+                        columnIds: [columnToTrack.id]
+                    }
                 }
             };
 
