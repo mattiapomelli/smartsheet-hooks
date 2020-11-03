@@ -16,7 +16,7 @@ app.use('/webhooks', hookRouter)
         const port = process.env.PORT || 3000
         app.listen(port, () => console.log(`Server started on port ${port}`));
 
-        await initializeHook(process.env.SHEET_ID, 'tryhook', 'https://205bf7efde55.ngrok.io/webhooks/tryhook'); 
+        await initializeHook(process.env.SHEET_ID, 'tryhook', 'https://eac869680025.ngrok.io/webhooks/tryhook'); 
 
     } catch (err) {
         console.error(err);

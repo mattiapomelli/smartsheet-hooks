@@ -1,6 +1,7 @@
 const express = require('express')
 const hookRouter = express.Router()
 const { sheetId } = require('../config')
+const { getDifferenceInDays } = require('../utils/utils')
 const { initSmartsheet } = require('../smartsheet')
 const smartsheet = initSmartsheet()
 
@@ -58,30 +59,42 @@ async function processEvents(callbackData) {
                 }
             };
             const response = await smartsheet.sheets.getSheet(options);
-            //console.log('res: ', response.rows[0].cells)
+
             // get the row modified
             const row = response.rows[0];
 
+            // get cell and column modified
             const modifiedCell = row.cells.find(cell => cell.columnId === event.columnId)
             const modifiedColumn = response.columns.find(column => column.id === modifiedCell.columnId)
             console.log(` New value "${modifiedCell.value}" in column "${modifiedColumn.title}", row number ${row.rowNumber}`)
 
+            // get start date
+            const startdateColumn = response.columns.find(column => column.title === 'Inizio')
+            const startdateCell = row.cells.find(cell => cell.columnId === startdateColumn.id)
+            const startDate = new Date(startdateCell.value)
+
+            // get column to update
             const columnToUpdate = response.columns.find(column => column.title === 'Completato')
-            //console.log('column to update: ', columnToUpdate.id, 'row to update: ', row.id)
+            const columnToUpdate2 = response.columns.find(column => column.title === 'Durata')
 
             if(modifiedColumn.title === 'Stato' && modifiedCell.value === 'Completo') {
-                console.log(modifiedCell)
                 const options = {
                     sheetId: sheetId,
-                    body: [{
-                        id: row.id,
-                        cells: [
-                            {
-                                columnId: columnToUpdate.id,
-                                value: new Date()
-                            }
-                        ]
-                    }]
+                    body: [
+                        {
+                            id: row.id,
+                            cells: [
+                                {
+                                    columnId: columnToUpdate.id,
+                                    value: new Date()
+                                },
+                                {
+                                    columnId: columnToUpdate2.id,
+                                    value: Math.floor(getDifferenceInDays( startDate , new Date())) + ' days'
+                                }
+                            ]
+                        }
+                    ]
                 }
 
                 smartsheet.sheets.updateRow(options)
