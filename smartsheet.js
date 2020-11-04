@@ -8,7 +8,6 @@ function initializeSmartsheetClient(token) {
     //if(smartsheet) {
     //    return smartsheet
     //}
-    console.log(token)
     smartsheet = client.createClient({
         accessToken: token,
     });
