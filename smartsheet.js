@@ -1,26 +1,30 @@
 const client = require('smartsheet');
-const { smartSheetAccessToken, sheetId } = require('./config')
+const { smartSheetAccessToken } = require('./config')
 
 let smartsheet;
 
 // initializes and returns smartsheet client, or returns the existing one if already created
-function initializeSmartsheetClient() {
-    if(smartsheet) {
-        return smartsheet
-    }
+function initializeSmartsheetClient(token) {
+    //if(smartsheet) {
+    //    return smartsheet
+    //}
+    console.log(token)
     smartsheet = client.createClient({
-        accessToken: smartSheetAccessToken,
-        //logLevel: 'info'
+        accessToken: token,
     });
+
     return smartsheet
 }
 
 // check for an existing web hook with the name and targetsheet provided, if doesn't find it creates a new one
 async function initializeHook(targetSheetId, hookName, callbackUrl) {
+    console.log('yo')
     try {
         let webhook = null;
-
         // Get all my hooks
+        const smartsheet = await initializeSmartsheetClient(smartSheetAccessToken)
+        console.log(smartsheet)
+
         const listHooksResponse = await smartsheet.webhooks.listWebhooks({
             includeAll: true
         });
@@ -80,11 +84,11 @@ async function initializeHook(targetSheetId, hookName, callbackUrl) {
 
         return updatedWebhook
     } catch (err) {
-        console.error(err);
+        return err;
     }
 }
 
 module.exports = {
-    initSmartsheet: initializeSmartsheetClient,
+    initializeSmartsheetClient,
     initializeHook
 }

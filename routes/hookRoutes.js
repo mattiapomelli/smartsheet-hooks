@@ -1,9 +1,9 @@
 const express = require('express')
 const hookRouter = express.Router()
-//const { sheetId } = require('../config')
 const { getDifferenceInDays } = require('../utils/utils')
-const { initSmartsheet, initializeHook } = require('../smartsheet')
-const smartsheet = initSmartsheet()
+const { initializeSmartsheetClient, initializeHook } = require("../smartsheet")
+const { smartSheetAccessToken } = require('../config')
+//const smartsheet = initSmartsheet()
 
 // lists all the webhooks for the current sheet
 hookRouter.get('/list', async (req, res) => {
@@ -48,6 +48,8 @@ async function processEvents(callbackData) {
     if (callbackData.scope !== "sheet") {
         return;
     }
+
+    const smartsheet = await initializeSmartsheetClient(smartSheetAccessToken)
 
     for (const event of callbackData.events) {
         // if the event was a cell change
@@ -114,6 +116,7 @@ async function processEvents(callbackData) {
     }
 }
 
+// create a new webhook
 hookRouter.post("/create", async(req, res) => {
     try {
         const { name, sheetId } = req.body;
