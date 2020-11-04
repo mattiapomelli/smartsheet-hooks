@@ -2,7 +2,7 @@ const express = require('express')
 const hookRouter = express.Router()
 const { sheetId } = require('../config')
 const { getDifferenceInDays } = require('../utils/utils')
-const { initSmartsheet } = require('../smartsheet')
+const { initSmartsheet, initializeHook } = require('../smartsheet')
 const smartsheet = initSmartsheet()
 
 // lists all the webhooks for the current sheet
@@ -113,5 +113,16 @@ async function processEvents(callbackData) {
         }
     }
 }
+
+hookRouter.post("/create", async(req, res) => {
+    try {
+        const { name, sheetId } = req.body;
+        await initializeHook(process.env.SHEET_ID, 'tryhook', `${process.env.URL}/webhooks/tryhook`);
+
+        res.json('')
+    } catch(err) {
+        res.json(err)
+    }
+})
 
 module.exports = hookRouter
