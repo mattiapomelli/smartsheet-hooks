@@ -17,12 +17,10 @@ function initializeSmartsheetClient(token) {
 
 // check for an existing web hook with the name and targetsheet provided, if doesn't find it creates a new one
 async function initializeHook(targetSheetId, hookName, callbackUrl) {
-    console.log('yo')
     try {
         let webhook = null;
         // Get all my hooks
         const smartsheet = await initializeSmartsheetClient(smartSheetAccessToken)
-        console.log(smartsheet)
 
         const listHooksResponse = await smartsheet.webhooks.listWebhooks({
             includeAll: true
@@ -47,7 +45,6 @@ async function initializeHook(targetSheetId, hookName, callbackUrl) {
             // get sheet and target column to listen for changes on
             const sheet = await smartsheet.sheets.getSheet({id: targetSheetId})
             const columnToTrack = sheet.columns.find(column => column.title === "Stato")
-            console.log('sheet: ', sheet)
 
             // create new webhook with following options
             const options = {
