@@ -1,20 +1,11 @@
 const express = require('express')
 const hookRouter = express.Router()
-//const { sheetId } = require('../config')
 const { getDifferenceInDays } = require('../utils/utils')
-const { initSmartsheet, initializeHook } = require('../smartsheet')
-const smartsheet = initSmartsheet()
-
-// lists all the webhooks for the current sheet
-hookRouter.get('/list', async (req, res) => {
-    const listHooksResponse = await smartsheet.webhooks.listWebhooks({
-        includeAll: true
-    });
-    res.json(listHooksResponse)
-})
+const { initializeSmartsheetClient, initializeHook } = require("../smartsheet")
+const { smartSheetAccessToken } = require('../config')
 
 // web hook callback - will be called when an event tracked by the webhook happens
-hookRouter.post("/tryhook", async(req, res) => {
+hookRouter.post("/hook/datecompleted", async(req, res) => {
     try {
         const body = req.body;
 
@@ -48,6 +39,8 @@ async function processEvents(callbackData) {
     if (callbackData.scope !== "sheet") {
         return;
     }
+
+    const smartsheet = await initializeSmartsheetClient(smartSheetAccessToken)
 
     for (const event of callbackData.events) {
         // if the event was a cell change
@@ -114,10 +107,11 @@ async function processEvents(callbackData) {
     }
 }
 
+// create a new webhook
 hookRouter.post("/create", async(req, res) => {
     try {
         const { name, sheetId } = req.body;
-        const webhook = await initializeHook(parseInt(sheetId), name, `${process.env.URL}/webhooks/tryhook`);
+        const webhook = await initializeHook(parseInt(sheetId), name, `${process.env.URL}/webhooks/hook/datecompleted`);
 
         res.json(webhook)
     } catch(err) {
