@@ -1,6 +1,6 @@
 const express = require('express')
 const hookRouter = express.Router()
-const { sheetId } = require('../config')
+//const { sheetId } = require('../config')
 const { getDifferenceInDays } = require('../utils/utils')
 const { initSmartsheet, initializeHook } = require('../smartsheet')
 const smartsheet = initSmartsheet()
@@ -85,7 +85,7 @@ async function processEvents(callbackData) {
 
                 // update cells
                 const options = {
-                    sheetId: sheetId,
+                    sheetId: callbackData.scopeObjectId,
                     body: [
                         {
                             id: row.id,
@@ -117,9 +117,9 @@ async function processEvents(callbackData) {
 hookRouter.post("/create", async(req, res) => {
     try {
         const { name, sheetId } = req.body;
-        await initializeHook(process.env.SHEET_ID, 'tryhook', `${process.env.URL}/webhooks/tryhook`);
+        const webhook = await initializeHook(parseInt(sheetId), name, `${process.env.URL}/webhooks/tryhook`);
 
-        res.json('')
+        res.json(webhook)
     } catch(err) {
         res.json(err)
     }

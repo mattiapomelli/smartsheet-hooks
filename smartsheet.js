@@ -42,8 +42,9 @@ async function initializeHook(targetSheetId, hookName, callbackUrl) {
         if (!webhook) {
             // TODO: make column to track dynamic by passing it to this function
             // get sheet and target column to listen for changes on
-            const sheet = await smartsheet.sheets.getSheet({id: sheetId})
+            const sheet = await smartsheet.sheets.getSheet({id: targetSheetId})
             const columnToTrack = sheet.columns.find(column => column.title === "Stato")
+            console.log('sheet: ', sheet)
 
             // create new webhook with following options
             const options = {
@@ -76,6 +77,8 @@ async function initializeHook(targetSheetId, hookName, callbackUrl) {
         const updateResponse = await smartsheet.webhooks.updateWebhook(options);
         const updatedWebhook = updateResponse.result;
         console.log(`Hook enabled: ${updatedWebhook.enabled}, status: ${updatedWebhook.status}`);
+
+        return updatedWebhook
     } catch (err) {
         console.error(err);
     }
