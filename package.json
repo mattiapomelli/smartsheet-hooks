@@ -12,7 +12,9 @@
   "dependencies": {
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
-    "smartsheet": "^2.101.0"
+    "smartsheet": "^2.101.0",
+    "request": "^2.83.0",
+    "zip-folder": "^1.0.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.6"

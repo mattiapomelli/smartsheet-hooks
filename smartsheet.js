@@ -45,6 +45,8 @@ async function initializeHook(targetSheetId, hookName, callbackUrl) {
             // get sheet and target column to listen for changes on
             const sheet = await smartsheet.sheets.getSheet({id: targetSheetId})
             const columnToTrack = sheet.columns.find(column => column.title === "POV status")
+            const columnToTrack2 = sheet.columns.find(column => column.title === "Converted to PO - booked")
+            console.log(columnToTrack2.id," --- " , columnToTrack.id)
 
             // create new webhook with following options
             const options = {
@@ -56,7 +58,7 @@ async function initializeHook(targetSheetId, hookName, callbackUrl) {
                     events: ["*.*"],
                     version: 1,
                     subscope: {
-                        columnIds: [columnToTrack.id]       // columns to track
+                        columnIds: [columnToTrack.id, columnToTrack2.id]       // columns to track
                     }
                 }
             };

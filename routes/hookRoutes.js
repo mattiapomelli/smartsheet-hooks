@@ -65,17 +65,16 @@ async function processEvents(callbackData) {
             const modifiedColumn = response.columns.find(column => column.id === modifiedCell.columnId)
             console.log(`New value "${modifiedCell.value}" in column "${modifiedColumn.title}", row number ${row.rowNumber}`)
 
-            // if the event happened is the one that should cause an update
+            let columnToUpdate
+            // if the event happened is the one that should cause an update, get column to update
             if(modifiedColumn.title === 'POV status' && modifiedCell.value === 'completed') {
-                // get start date
-                //const startdateColumn = response.columns.find(column => column.title === 'Inizio')
-                //const startdateCell = row.cells.find(cell => cell.columnId === startdateColumn.id)
-                //const startDate = new Date(startdateCell.value)
+                columnToUpdate = response.columns.find(column => column.title === 'complete date')
+            }
+            else if (modifiedColumn.title === 'Converted to PO - booked' && modifiedCell.value !== '') {
+                columnToUpdate = response.columns.find(column => column.title === 'booked date')
+            }
 
-                // get column to update
-                const completedColumn = response.columns.find(column => column.title === 'complete date')
-                //const durationColumn = response.columns.find(column => column.title === 'Durata')
-
+            if (columnToUpdate !== undefined) {
                 // update cells
                 const options = {
                     sheetId: callbackData.scopeObjectId,
@@ -84,13 +83,9 @@ async function processEvents(callbackData) {
                             id: row.id,
                             cells: [
                                 {
-                                    columnId: completedColumn.id,
+                                    columnId: columnToUpdate.id,
                                     value: new Date()
                                 },
-                                // {
-                                //     columnId: durationColumn.id,
-                                //     value: Math.floor(getDifferenceInDays( startDate , new Date())) + ' days'
-                                // }
                             ]
                         }
                     ]
